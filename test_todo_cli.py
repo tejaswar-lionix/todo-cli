@@ -39,5 +39,23 @@ class TodoTests(unittest.TestCase):
             self.assertEqual(load(path)[0]["text"], "persist")
 
 
+class ExportTests(unittest.TestCase):
+    def test_export_csv_writes_header_and_rows(self):
+        import csv
+
+        from todo import export_csv
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "todos.csv")
+            export_csv(
+                [{"done": False, "text": "a,b", "created": "2026-01-01"}],
+                path,
+            )
+            with open(path, encoding="utf-8") as handle:
+                rows = list(csv.reader(handle))
+        self.assertEqual(rows[0], ["done", "text", "created"])
+        self.assertEqual(rows[1][1], "a,b")
+
+
 if __name__ == "__main__":
     unittest.main()

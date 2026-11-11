@@ -86,3 +86,15 @@ def main(argv=None):
 
 if __name__ == "__main__":
     main()
+
+
+def export_csv(todos, path):
+    """Write todos to path as CSV with done, text, and created columns."""
+    import csv
+
+    with open(path, "w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["done", "text", "created"])
+        for todo in todos:
+            writer.writerow([todo["done"], todo["text"], todo.get("created", "")])
+    return path
