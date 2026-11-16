@@ -2,7 +2,16 @@ import os
 import tempfile
 import unittest
 
-from todo import add, complete, format_todos, load, pending, remove, save
+from todo import (
+    add,
+    complete,
+    format_todos,
+    load,
+    overdue,
+    pending,
+    remove,
+    save,
+)
 
 
 class TodoTests(unittest.TestCase):
@@ -37,6 +46,35 @@ class TodoTests(unittest.TestCase):
             path = os.path.join(directory, "todos.json")
             save(path, add([], "persist"))
             self.assertEqual(load(path)[0]["text"], "persist")
+
+
+class DueDateTests(unittest.TestCase):
+    def test_add_stores_due_date(self):
+        todos = add([], "pay rent", due="2026-11-15")
+        self.assertEqual(todos[0]["due"], "2026-11-15")
+
+    def test_add_without_due_date_stores_none(self):
+        todos = add([], "someday")
+        self.assertIsNone(todos[0]["due"])
+
+    def test_add_rejects_bad_due_date(self):
+        with self.assertRaises(ValueError):
+            add([], "pay rent", due="15/11/2026")
+
+    def test_overdue_lists_only_unfinished_past_items(self):
+        todos = add([], "past", due="2026-11-10")
+        add(todos, "future", due="2026-11-20")
+        add(todos, "undated")
+        add(todos, "done", due="2026-11-01")
+        complete(todos, 3)
+        self.assertEqual(
+            [todo["text"] for todo in overdue(todos, today="2026-11-16")],
+            ["past"],
+        )
+
+    def test_overdue_excludes_due_today(self):
+        todos = add([], "today", due="2026-11-16")
+        self.assertEqual(overdue(todos, today="2026-11-16"), [])
 
 
 class ExportTests(unittest.TestCase):
