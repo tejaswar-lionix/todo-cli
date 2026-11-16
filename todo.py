@@ -20,7 +20,17 @@ def save(path, todos):
         json.dump(todos, handle, indent=2)
 
 
-def add(todos, text):
+def parse_due(due):
+    """Validate an optional YYYY-MM-DD due date and return it normalised."""
+    if due is None or due == "":
+        return None
+    try:
+        return datetime.strptime(due, "%Y-%m-%d").date().isoformat()
+    except ValueError as error:
+        raise ValueError("due date must be formatted as YYYY-MM-DD") from error
+
+
+def add(todos, text, due=None):
     text = text.strip()
     if not text:
         raise ValueError("todo text must not be empty")
@@ -29,6 +39,7 @@ def add(todos, text):
             "text": text,
             "done": False,
             "created": datetime.now().isoformat(timespec="seconds"),
+            "due": parse_due(due),
         }
     )
     return todos
@@ -47,13 +58,30 @@ def pending(todos):
     return [todo for todo in todos if not todo["done"]]
 
 
+def overdue(todos, today=None):
+    """Return unfinished todos whose due date is before today."""
+    if today is None:
+        today = datetime.now().date().isoformat()
+    today = parse_due(today)
+    return [
+        todo
+        for todo in todos
+        if not todo["done"]
+        and todo.get("due")
+        and todo["due"] < today
+    ]
+
+
 def format_todos(todos):
     if not todos:
         return "No todos yet."
     lines = []
     for number, todo in enumerate(todos, start=1):
         mark = "x" if todo["done"] else " "
-        lines.append(f"{number}. [{mark}] {todo['text']}")
+        line = f"{number}. [{mark}] {todo['text']}"
+        if todo.get("due"):
+            line += f" (due {todo['due']})"
+        lines.append(line)
     return "\n".join(lines)
 
 
@@ -63,11 +91,13 @@ def build_parser():
     commands = parser.add_subparsers(dest="command", required=True)
     add_cmd = commands.add_parser("add")
     add_cmd.add_argument("text")
+    add_cmd.add_argument("--due", help="due date in YYYY-MM-DD form")
     done_cmd = commands.add_parser("done")
     done_cmd.add_argument("index", type=int)
     remove_cmd = commands.add_parser("rm")
     remove_cmd.add_argument("index", type=int)
     commands.add_parser("list")
+    commands.add_parser("overdue")
     return parser
 
 
@@ -75,11 +105,14 @@ def main(argv=None):
     args = build_parser().parse_args(argv)
     todos = load(args.file)
     if args.command == "add":
-        add(todos, args.text)
+        add(todos, args.text, args.due)
     elif args.command == "done":
         complete(todos, args.index - 1)
     elif args.command == "rm":
         todos = remove(todos, args.index - 1)
+    if args.command == "overdue":
+        print(format_todos(overdue(todos)) or "No overdue todos.")
+        return
     save(args.file, todos)
     print(format_todos(todos))
 
