@@ -58,6 +58,13 @@ def by_priority(todos, priority):
     return [todo for todo in todos if todo.get("priority", "medium") == priority]
 
 
+def search(todos, query):
+    query = query.strip().lower()
+    if not query:
+        return []
+    return [todo for todo in todos if query in todo["text"].lower()]
+
+
 def complete(todos, index):
     todos[index]["done"] = True
     return todos
@@ -114,6 +121,8 @@ def build_parser():
     remove_cmd.add_argument("index", type=int)
     priority_cmd = commands.add_parser("priority")
     priority_cmd.add_argument("priority", choices=PRIORITIES)
+    search_cmd = commands.add_parser("search")
+    search_cmd.add_argument("query")
     commands.add_parser("list")
     commands.add_parser("overdue")
     return parser
@@ -133,6 +142,9 @@ def main(argv=None):
         return
     if args.command == "priority":
         print(format_todos(by_priority(todos, args.priority)) or "No todos.")
+        return
+    if args.command == "search":
+        print(format_todos(search(todos, args.query)) or "No matching todos.")
         return
     save(args.file, todos)
     print(format_todos(todos))
