@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 
 DEFAULT_PATH = os.path.expanduser("~/.todo-cli.json")
+PRIORITIES = ("low", "medium", "high")
 
 
 def load(path):
@@ -30,7 +31,13 @@ def parse_due(due):
         raise ValueError("due date must be formatted as YYYY-MM-DD") from error
 
 
-def add(todos, text, due=None):
+def parse_priority(priority):
+    if priority not in PRIORITIES:
+        raise ValueError(f"unknown priority: {priority}")
+    return priority
+
+
+def add(todos, text, due=None, priority="medium"):
     text = text.strip()
     if not text:
         raise ValueError("todo text must not be empty")
@@ -40,9 +47,15 @@ def add(todos, text, due=None):
             "done": False,
             "created": datetime.now().isoformat(timespec="seconds"),
             "due": parse_due(due),
+            "priority": parse_priority(priority),
         }
     )
     return todos
+
+
+def by_priority(todos, priority):
+    priority = parse_priority(priority)
+    return [todo for todo in todos if todo.get("priority", "medium") == priority]
 
 
 def complete(todos, index):
@@ -78,7 +91,7 @@ def format_todos(todos):
     lines = []
     for number, todo in enumerate(todos, start=1):
         mark = "x" if todo["done"] else " "
-        line = f"{number}. [{mark}] {todo['text']}"
+        line = f"{number}. [{mark}] {todo['text']} [{todo.get('priority', 'medium')}]"
         if todo.get("due"):
             line += f" (due {todo['due']})"
         lines.append(line)
@@ -92,10 +105,15 @@ def build_parser():
     add_cmd = commands.add_parser("add")
     add_cmd.add_argument("text")
     add_cmd.add_argument("--due", help="due date in YYYY-MM-DD form")
+    add_cmd.add_argument(
+        "--priority", choices=PRIORITIES, default="medium", help="todo priority"
+    )
     done_cmd = commands.add_parser("done")
     done_cmd.add_argument("index", type=int)
     remove_cmd = commands.add_parser("rm")
     remove_cmd.add_argument("index", type=int)
+    priority_cmd = commands.add_parser("priority")
+    priority_cmd.add_argument("priority", choices=PRIORITIES)
     commands.add_parser("list")
     commands.add_parser("overdue")
     return parser
@@ -105,13 +123,16 @@ def main(argv=None):
     args = build_parser().parse_args(argv)
     todos = load(args.file)
     if args.command == "add":
-        add(todos, args.text, args.due)
+        add(todos, args.text, args.due, args.priority)
     elif args.command == "done":
         complete(todos, args.index - 1)
     elif args.command == "rm":
         todos = remove(todos, args.index - 1)
     if args.command == "overdue":
         print(format_todos(overdue(todos)) or "No overdue todos.")
+        return
+    if args.command == "priority":
+        print(format_todos(by_priority(todos, args.priority)) or "No todos.")
         return
     save(args.file, todos)
     print(format_todos(todos))

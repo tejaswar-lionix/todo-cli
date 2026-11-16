@@ -4,6 +4,7 @@ import unittest
 
 from todo import (
     add,
+    by_priority,
     complete,
     format_todos,
     load,
@@ -75,6 +76,40 @@ class DueDateTests(unittest.TestCase):
     def test_overdue_excludes_due_today(self):
         todos = add([], "today", due="2026-11-16")
         self.assertEqual(overdue(todos, today="2026-11-16"), [])
+
+
+class PriorityTests(unittest.TestCase):
+    def test_add_defaults_to_medium(self):
+        todos = add([], "write tests")
+        self.assertEqual(todos[0]["priority"], "medium")
+
+    def test_add_stores_priority(self):
+        todos = add([], "pay rent", priority="high")
+        self.assertEqual(todos[0]["priority"], "high")
+
+    def test_add_rejects_unknown_priority(self):
+        with self.assertRaises(ValueError):
+            add([], "pay rent", priority="urgent")
+
+    def test_by_priority_returns_only_matching_in_order(self):
+        todos = add([], "low one", priority="low")
+        add(todos, "high one", priority="high")
+        add(todos, "low two", priority="low")
+        self.assertEqual(
+            [todo["text"] for todo in by_priority(todos, "low")],
+            ["low one", "low two"],
+        )
+
+    def test_by_priority_rejects_unknown_priority(self):
+        with self.assertRaises(ValueError):
+            by_priority([], "urgent")
+
+    def test_format_includes_priority(self):
+        todos = add([], "pay rent", due="2026-11-15", priority="high")
+        self.assertEqual(
+            format_todos(todos),
+            "1. [ ] pay rent [high] (due 2026-11-15)",
+        )
 
 
 class ExportTests(unittest.TestCase):
