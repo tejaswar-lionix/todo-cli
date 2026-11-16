@@ -12,6 +12,7 @@ from todo import (
     pending,
     remove,
     save,
+    search,
 )
 
 
@@ -110,6 +111,23 @@ class PriorityTests(unittest.TestCase):
             format_todos(todos),
             "1. [ ] pay rent [high] (due 2026-11-15)",
         )
+
+
+class SearchTests(unittest.TestCase):
+    def test_search_matches_case_insensitively_in_order(self):
+        todos = add(add(add([], "Write report"), "read book"), "WRITE tests")
+        self.assertEqual(
+            [todo["text"] for todo in search(todos, "write")],
+            ["Write report", "WRITE tests"],
+        )
+
+    def test_search_returns_empty_when_nothing_matches(self):
+        todos = add([], "write report")
+        self.assertEqual(search(todos, "garden"), [])
+
+    def test_search_blank_query_returns_empty(self):
+        todos = add([], "write report")
+        self.assertEqual(search(todos, "   "), [])
 
 
 class ExportTests(unittest.TestCase):
