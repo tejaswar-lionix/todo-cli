@@ -5,6 +5,7 @@ import unittest
 from todo import (
     add,
     by_priority,
+    clear_done,
     complete,
     format_todos,
     load,
@@ -48,6 +49,30 @@ class TodoTests(unittest.TestCase):
             path = os.path.join(directory, "todos.json")
             save(path, add([], "persist"))
             self.assertEqual(load(path)[0]["text"], "persist")
+
+
+class ClearDoneTests(unittest.TestCase):
+    def test_removes_done_items(self):
+        todos = add(add([], "one"), "two")
+        complete(todos, 0)
+        self.assertEqual([todo["text"] for todo in clear_done(todos)], ["two"])
+
+    def test_keeps_pending_items(self):
+        todos = add(add([], "one"), "two")
+        self.assertEqual(
+            [todo["text"] for todo in clear_done(todos)],
+            ["one", "two"],
+        )
+
+    def test_does_not_mutate_input(self):
+        todos = add(add([], "one"), "two")
+        complete(todos, 0)
+        clear_done(todos)
+        self.assertEqual(len(todos), 2)
+        self.assertTrue(todos[0]["done"])
+
+    def test_empty_list(self):
+        self.assertEqual(clear_done([]), [])
 
 
 class DueDateTests(unittest.TestCase):

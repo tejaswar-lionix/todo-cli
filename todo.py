@@ -78,6 +78,10 @@ def pending(todos):
     return [todo for todo in todos if not todo["done"]]
 
 
+def clear_done(todos):
+    return [todo for todo in todos if not todo["done"]]
+
+
 def overdue(todos, today=None):
     """Return unfinished todos whose due date is before today."""
     if today is None:
@@ -125,6 +129,7 @@ def build_parser():
     search_cmd.add_argument("query")
     commands.add_parser("list")
     commands.add_parser("overdue")
+    commands.add_parser("clear-done")
     return parser
 
 
@@ -137,6 +142,8 @@ def main(argv=None):
         complete(todos, args.index - 1)
     elif args.command == "rm":
         todos = remove(todos, args.index - 1)
+    elif args.command == "clear-done":
+        todos = clear_done(todos)
     if args.command == "overdue":
         print(format_todos(overdue(todos)) or "No overdue todos.")
         return

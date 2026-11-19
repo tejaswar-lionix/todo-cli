@@ -13,11 +13,13 @@ python3 todo.py priority high
 python3 todo.py search plan
 python3 todo.py done 1
 python3 todo.py rm 1
+python3 todo.py clear-done
 ```
 
 ## Features
 
 - Add, list, complete, and remove todos
+- Remove all completed todos without mutating the input with clear_done(todos) or `clear-done`
 - Optional due dates and an overdue filter
 - Low, medium, and high priorities with filtering via `priority`
 - Case-insensitive text search with `search`
