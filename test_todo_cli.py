@@ -173,5 +173,25 @@ class ExportTests(unittest.TestCase):
         self.assertEqual(rows[1][1], "a,b")
 
 
+class StatsTests(unittest.TestCase):
+    def test_counts_statuses(self):
+        from todo import add, complete, stats
+
+        todos = add([], "one", due="2026-11-10")
+        add(todos, "two")
+        complete(todos, 1)
+        self.assertEqual(
+            stats(todos, today="2026-11-16"),
+            {"total": 2, "done": 1, "pending": 1, "overdue": 1},
+        )
+
+    def test_empty(self):
+        from todo import stats
+
+        self.assertEqual(
+            stats([]), {"total": 0, "done": 0, "pending": 0, "overdue": 0}
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
