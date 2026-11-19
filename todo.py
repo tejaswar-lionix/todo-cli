@@ -171,3 +171,14 @@ def export_csv(todos, path):
         for todo in todos:
             writer.writerow([todo["done"], todo["text"], todo.get("created", "")])
     return path
+
+
+def stats(todos, today=None):
+    """Return counts of total, done, pending, and overdue todos."""
+    done = sum(1 for todo in todos if todo["done"])
+    return {
+        "total": len(todos),
+        "done": done,
+        "pending": len(todos) - done,
+        "overdue": len(overdue(todos, today)),
+    }

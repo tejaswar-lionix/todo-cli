@@ -32,6 +32,10 @@ python3 todo.py clear-done
 python3 -m unittest -q
 ```
 
+## Additional API
+
+- `stats(todos, today=None)` returns total, done, pending, and overdue counts.
+
 ## License
 
 MIT
